@@ -2,6 +2,8 @@
 
 A SAPI5 Text-to-Speech bridge that routes speech from legacy Windows applications to the NVDA screen reader.
 
+> **Quick Start**: Want to get started immediately? See [QUICKSTART.md](QUICKSTART.md) for a 5-minute setup guide!
+
 ## Overview
 
 This project provides a solution for totally blind users who want to use legacy Windows applications that support SAPI5 (Speech API 5) speech output with the NVDA (NonVisual Desktop Access) screen reader.
