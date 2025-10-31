@@ -1,0 +1,23 @@
+Windows Registry Editor Version 5.00
+
+; Register NVDA-SAPI Bridge as a SAPI5 TTS Voice
+
+[HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Speech\Voices\Tokens\NvdaBridge]
+@="NVDA Bridge"
+"CLSID"="{E6F6B6F0-8F3A-4B3E-9F3E-3F3E3F3E3F3E}"
+"409"="NVDA Bridge"
+
+[HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Speech\Voices\Tokens\NvdaBridge\Attributes]
+"Gender"="Female"
+"Age"="Adult"
+"Language"="409"
+"Name"="NVDA Bridge"
+"Vendor"="NVDA-SAPI Project"
+"Version"="1.0"
+
+[HKEY_CLASSES_ROOT\CLSID\{E6F6B6F0-8F3A-4B3E-9F3E-3F3E3F3E3F3E}]
+@="NVDA-SAPI Bridge TTS Engine"
+
+[HKEY_CLASSES_ROOT\CLSID\{E6F6B6F0-8F3A-4B3E-9F3E-3F3E3F3E3F3E}\InprocServer32]
+@="nvda-sapi.dll"
+"ThreadingModel"="Both"

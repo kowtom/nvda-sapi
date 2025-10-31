@@ -1,0 +1,7 @@
+Windows Registry Editor Version 5.00
+
+; Unregister NVDA-SAPI Bridge from SAPI5
+
+[-HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Speech\Voices\Tokens\NvdaBridge]
+
+[-HKEY_CLASSES_ROOT\CLSID\{E6F6B6F0-8F3A-4B3E-9F3E-3F3E3F3E3F3E}]
