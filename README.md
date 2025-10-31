@@ -93,6 +93,14 @@ You can also test with any SAPI5 application, such as:
 - Natural Reader
 - Many educational and accessibility applications
 
+## Known Limitations
+
+- **SAPI5 Interface Compatibility**: This implementation uses a simplified Python COM server approach. While it works with many SAPI5 applications, it may not be compatible with applications that require the full ISpTTSEngine interface.
+- **Voice Parameters**: Rate, pitch, and volume parameters sent from SAPI5 applications are not forwarded to NVDA. Use NVDA's own settings to configure these parameters.
+- **Audio Output**: The bridge doesn't produce actual audio streams; it forwards text directly to NVDA.
+
+If you encounter compatibility issues with a specific application, please open an issue on GitHub.
+
 ## Uninstallation
 
 ### Quick Uninstall

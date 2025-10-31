@@ -53,12 +53,22 @@ def load_nvda_controller():
 
 
 class NVDASAPIBridge:
-    """SAPI5 TTS Engine that forwards to NVDA"""
+    """SAPI5 TTS Engine that forwards to NVDA
+    
+    Note: This is a simplified SAPI5 voice implementation. Full SAPI5 TTS engine
+    interface (ISpTTSEngine) is complex and not fully supported by pywin32.
+    This implementation works as a basic voice for many SAPI5 applications,
+    but may not be compatible with all applications that require complete
+    TTS engine interfaces.
+    """
     
     _reg_clsid_ = "{A1F4C0E0-8B6E-4B5F-9F4A-1E2D3C4B5A6F}"
     _reg_desc_ = "NVDA SAPI Bridge TTS Engine"
     _reg_progid_ = "NVDA.SAPIBridge.1"
     _public_methods_ = ['Speak', 'GetOutputFormat', 'SetObjectToken']
+    # Note: _com_interfaces_ is empty because ISpTTSEngine is not directly
+    # available in pywin32. This works as a basic voice but may have
+    # compatibility limitations with some SAPI5 applications.
     _com_interfaces_ = []
     
     def __init__(self):
@@ -75,8 +85,10 @@ class NVDASAPIBridge:
                 else:
                     # NVDA stopped, try to reload
                     self.nvda_available = load_nvda_controller()
-            except Exception:
-                pass
+            except (OSError, ctypes.WinError) as e:
+                # Log error for debugging but don't crash
+                # In production, consider using proper logging
+                print(f"Warning: NVDA speech failed: {e}", file=sys.stderr)
         return 0  # S_OK
     
     def GetOutputFormat(self):
@@ -144,7 +156,8 @@ def unregister_nvda_bridge():
         try:
             winreg.DeleteKey(winreg.HKEY_LOCAL_MACHINE, voice_key + r"\Attributes")
             winreg.DeleteKey(winreg.HKEY_LOCAL_MACHINE, voice_key)
-        except WindowsError:
+        except OSError:
+            # Key may not exist if never registered or already removed
             pass
         
         print("Unregistration successful!")
