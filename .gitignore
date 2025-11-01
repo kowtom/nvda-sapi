@@ -1,0 +1,34 @@
+# Build artifacts
+build/
+bin/
+lib/
+*.dll
+*.exe
+*.obj
+*.o
+*.a
+*.lib
+*.exp
+*.pdb
+*.ilk
+
+# IDE files
+.vs/
+.vscode/
+*.user
+*.suo
+*.sln
+*.vcxproj
+*.vcxproj.filters
+
+# CMake files
+CMakeCache.txt
+CMakeFiles/
+cmake_install.cmake
+Makefile
+*.cmake
+
+# Temporary files
+*.log
+*.tmp
+/tmp/
