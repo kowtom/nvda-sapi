@@ -7,6 +7,10 @@ echo ""
 
 ERRORS=0
 
+# Minimum expected DLL size in bytes (50KB)
+# DLLs smaller than this likely failed to build correctly
+MIN_DLL_SIZE=50000
+
 # Check if build directories exist
 if [ ! -d "build/x86/bin" ]; then
     echo "[ERROR] x86 build directory not found"
@@ -29,10 +33,10 @@ if [ ! -f "build/x86/bin/nvda_sapi32.dll" ]; then
 else
     echo "[OK] nvda_sapi32.dll found"
     
-    # Check file size (should be at least 50KB)
+    # Check file size (should be at least MIN_DLL_SIZE)
     SIZE=$(stat -f%z "build/x86/bin/nvda_sapi32.dll" 2>/dev/null || stat -c%s "build/x86/bin/nvda_sapi32.dll" 2>/dev/null)
-    if [ "$SIZE" -lt 50000 ]; then
-        echo "[WARNING] nvda_sapi32.dll seems too small ($SIZE bytes)"
+    if [ "$SIZE" -lt "$MIN_DLL_SIZE" ]; then
+        echo "[WARNING] nvda_sapi32.dll seems too small ($SIZE bytes, expected >$MIN_DLL_SIZE)"
     else
         echo "[OK] nvda_sapi32.dll size: $SIZE bytes"
     fi
@@ -46,8 +50,8 @@ else
     
     # Check file size
     SIZE=$(stat -f%z "build/x64/bin/nvda_sapi64.dll" 2>/dev/null || stat -c%s "build/x64/bin/nvda_sapi64.dll" 2>/dev/null)
-    if [ "$SIZE" -lt 50000 ]; then
-        echo "[WARNING] nvda_sapi64.dll seems too small ($SIZE bytes)"
+    if [ "$SIZE" -lt "$MIN_DLL_SIZE" ]; then
+        echo "[WARNING] nvda_sapi64.dll seems too small ($SIZE bytes, expected >$MIN_DLL_SIZE)"
     else
         echo "[OK] nvda_sapi64.dll size: $SIZE bytes"
     fi

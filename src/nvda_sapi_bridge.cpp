@@ -12,10 +12,10 @@
 #define SELFREG_E_CLASS _HRESULT_TYPEDEF_(0x80029C45L)
 #endif
 
-// {E6F8A7F0-8B1E-4F9A-9C3D-1234567890AB} - NVDA SAPI Bridge CLSID
+// {A65F3370-547A-4E90-90B1-F5DF86FB7815} - NVDA SAPI Bridge CLSID
 // This GUID uniquely identifies our SAPI voice engine
 static const CLSID CLSID_NVDASAPIBridge = 
-    {0xE6F8A7F0, 0x8B1E, 0x4F9A, {0x9C, 0x3D, 0x12, 0x34, 0x56, 0x78, 0x90, 0xAB}};
+    {0xA65F3370, 0x547A, 0x4E90, {0x90, 0xB1, 0xF5, 0xDF, 0x86, 0xFB, 0x78, 0x15}};
 
 // Global variables
 HMODULE g_hModule = nullptr;
