@@ -26,7 +26,10 @@ CMakeCache.txt
 CMakeFiles/
 cmake_install.cmake
 Makefile
-*.cmake
+install_manifest.txt
+
+# Ignore CMake generated files but not toolchain files
+!toolchain-*.cmake
 
 # Temporary files
 *.log
