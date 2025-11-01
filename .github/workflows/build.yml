@@ -6,10 +6,17 @@ on:
   pull_request:
     branches: [ main ]
 
+permissions:
+  contents: read
+
 jobs:
   build-windows:
     name: Build Windows (${{ matrix.arch }})
     runs-on: windows-latest
+    
+    permissions:
+      contents: read
+      
     strategy:
       matrix:
         arch: [x86, x64]
@@ -52,6 +59,9 @@ jobs:
   build-cross-compile:
     name: Cross-compile from Linux
     runs-on: ubuntu-latest
+    
+    permissions:
+      contents: read
     
     steps:
     - uses: actions/checkout@v3
