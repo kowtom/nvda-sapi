@@ -1,7 +1,7 @@
 #include "sapi_voice.h"
 #include "nvda_client.h"
-#include <cstring>  // for memcpy
-#include <cstdlib>  // for malloc/free
+#include <string.h>  // for memcpy (C version)
+#include <stdlib.h>  // for malloc/free (C version)
 
 SAPIVoice::SAPIVoice()
     : m_refCount(1)
@@ -88,15 +88,16 @@ STDMETHODIMP SAPIVoice::Speak(DWORD dwSpeakFlags, REFGUID rguidFormatId,
         // Allocate buffer (use malloc to avoid exceptions)
         wchar_t* buffer = static_cast<wchar_t*>(malloc((totalLen + 1) * sizeof(wchar_t)));
         if (buffer) {
-            // Copy all text fragments into buffer
+            // Copy all text fragments into buffer using C memcpy (not std::memcpy)
             size_t offset = 0;
             pCurrentFrag = pTextFragList;
             
             while (pCurrentFrag && offset < totalLen) {
                 if (pCurrentFrag->pTextStart && pCurrentFrag->ulTextLen > 0) {
-                    size_t bytesToCopy = pCurrentFrag->ulTextLen * sizeof(wchar_t);
-                    std::memcpy(buffer + offset, pCurrentFrag->pTextStart, bytesToCopy);
-                    offset += pCurrentFrag->ulTextLen;
+                    size_t charsToCopy = pCurrentFrag->ulTextLen;
+                    // Use plain C memcpy, not std::memcpy
+                    memcpy(buffer + offset, pCurrentFrag->pTextStart, charsToCopy * sizeof(wchar_t));
+                    offset += charsToCopy;
                 }
                 pCurrentFrag = pCurrentFrag->pNext;
             }
@@ -105,8 +106,9 @@ STDMETHODIMP SAPIVoice::Speak(DWORD dwSpeakFlags, REFGUID rguidFormatId,
             
             // Send to NVDA directly using C-string (no std::wstring creation)
             // Double-check pointer is valid before calling
-            if (m_nvdaClient.get() != nullptr && totalLen > 0 && buffer[0] != L'\0') {
-                m_nvdaClient->SpeakText(buffer);
+            NVDAClient* client = m_nvdaClient.get();
+            if (client != nullptr && totalLen > 0 && buffer[0] != L'\0') {
+                client->SpeakText(buffer);
             }
             
             free(buffer);
