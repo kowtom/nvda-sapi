@@ -68,17 +68,40 @@ bool NVDAClient::Speak(const std::wstring& text) {
 }
 
 bool NVDAClient::SpeakText(const wchar_t* text) {
-    if (!m_speakText || !text || text[0] == L'\0') {
+    // Validate all parameters and state before proceeding
+    if (!text) {
         return false;
     }
-
-    // Check if NVDA is running
-    if (!IsNVDARunning()) {
+    
+    if (text[0] == L'\0') {
         return false;
     }
-
-    // Send text to NVDA
-    return m_speakText(text) == 0;
+    
+    if (!m_speakText) {
+        return false;
+    }
+    
+    if (!m_testIfRunning) {
+        return false;
+    }
+    
+    // Check if NVDA is running - wrap in check to prevent crashes
+    long testResult = 0;
+    if (m_testIfRunning) {
+        testResult = m_testIfRunning();
+    }
+    
+    if (testResult != 0) {
+        return false;  // NVDA not running
+    }
+    
+    // Send text to NVDA - wrap in check to prevent crashes
+    long speakResult = -1;
+    if (m_speakText && text) {
+        speakResult = m_speakText(text);
+    }
+    
+    return speakResult == 0;
 }
 
 bool NVDAClient::CancelSpeech() {

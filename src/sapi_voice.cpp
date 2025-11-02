@@ -84,7 +84,7 @@ STDMETHODIMP SAPIVoice::Speak(DWORD dwSpeakFlags, REFGUID rguidFormatId,
     }
     
     // Only proceed if we have text and NVDA client is available
-    if (totalLen > 0 && m_nvdaClient) {
+    if (totalLen > 0 && m_nvdaClient.get() != nullptr) {
         // Allocate buffer (use malloc to avoid exceptions)
         wchar_t* buffer = static_cast<wchar_t*>(malloc((totalLen + 1) * sizeof(wchar_t)));
         if (buffer) {
@@ -104,7 +104,8 @@ STDMETHODIMP SAPIVoice::Speak(DWORD dwSpeakFlags, REFGUID rguidFormatId,
             buffer[totalLen] = L'\0';
             
             // Send to NVDA directly using C-string (no std::wstring creation)
-            if (m_nvdaClient && totalLen > 0) {
+            // Double-check pointer is valid before calling
+            if (m_nvdaClient.get() != nullptr && totalLen > 0 && buffer[0] != L'\0') {
                 m_nvdaClient->SpeakText(buffer);
             }
             
