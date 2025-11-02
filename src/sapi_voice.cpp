@@ -1,19 +1,20 @@
 #include "sapi_voice.h"
 #include "nvda_client.h"
-#include <sstream>
+#include <cstring>  // for memcpy
+#include <cstdlib>  // for malloc/free
 
 SAPIVoice::SAPIVoice()
     : m_refCount(1)
     , m_nvdaClient(nullptr) {
-    // Safely initialize NVDA client
-    try {
-        m_nvdaClient = std::make_unique<NVDAClient>();
-        m_nvdaClient->Initialize();
-    }
-    catch (...) {
-        // If initialization fails, m_nvdaClient will remain nullptr
-        // Speak() will handle this gracefully
-        m_nvdaClient.reset();
+    // Initialize NVDA client without exceptions
+    // Using new with nothrow to avoid exceptions
+    NVDAClient* client = new (std::nothrow) NVDAClient();
+    if (client) {
+        if (client->Initialize()) {
+            m_nvdaClient.reset(client);
+        } else {
+            delete client;
+        }
     }
 }
 
@@ -70,33 +71,54 @@ STDMETHODIMP SAPIVoice::Speak(DWORD dwSpeakFlags, REFGUID rguidFormatId,
         return S_OK;
     }
 
-    // Safely build complete text from fragments with error handling
-    try {
-        std::wstringstream textStream;
-        const SPVTEXTFRAG* pCurrentFrag = pTextFragList;
-
-        while (pCurrentFrag) {
-            if (pCurrentFrag->pTextStart && pCurrentFrag->ulTextLen > 0) {
-                textStream.write(pCurrentFrag->pTextStart, pCurrentFrag->ulTextLen);
+    // Build text carefully without exceptions
+    // First, calculate total length needed
+    size_t totalLen = 0;
+    const SPVTEXTFRAG* pCurrentFrag = pTextFragList;
+    
+    while (pCurrentFrag) {
+        if (pCurrentFrag->pTextStart && pCurrentFrag->ulTextLen > 0) {
+            totalLen += pCurrentFrag->ulTextLen;
+        }
+        pCurrentFrag = pCurrentFrag->pNext;
+    }
+    
+    // Only proceed if we have text and NVDA client is available
+    if (totalLen > 0 && m_nvdaClient) {
+        // Allocate buffer (use malloc to avoid exceptions)
+        wchar_t* buffer = static_cast<wchar_t*>(malloc((totalLen + 1) * sizeof(wchar_t)));
+        if (buffer) {
+            // Copy all text fragments into buffer
+            size_t offset = 0;
+            pCurrentFrag = pTextFragList;
+            
+            while (pCurrentFrag && offset < totalLen) {
+                if (pCurrentFrag->pTextStart && pCurrentFrag->ulTextLen > 0) {
+                    size_t bytesToCopy = pCurrentFrag->ulTextLen * sizeof(wchar_t);
+                    std::memcpy(buffer + offset, pCurrentFrag->pTextStart, bytesToCopy);
+                    offset += pCurrentFrag->ulTextLen;
+                }
+                pCurrentFrag = pCurrentFrag->pNext;
             }
-            pCurrentFrag = pCurrentFrag->pNext;
-        }
-
-        std::wstring text = textStream.str();
-        
-        if (!text.empty() && m_nvdaClient) {
-            // Send text to NVDA
-            // If NVDA is not available, still return success to avoid breaking applications
-            m_nvdaClient->Speak(text);
+            
+            buffer[totalLen] = L'\0';
+            
+            // Send to NVDA - use the buffer directly
+            // Create wstring only if needed, in a safe manner
+            if (m_nvdaClient && totalLen > 0) {
+                // Allocate wstring with nothrow
+                std::wstring* textPtr = new (std::nothrow) std::wstring(buffer, totalLen);
+                if (textPtr) {
+                    m_nvdaClient->Speak(*textPtr);
+                    delete textPtr;
+                }
+            }
+            
+            free(buffer);
         }
     }
-    catch (...) {
-        // Catch any exceptions from string operations or NVDA client
-        // Return success to avoid breaking the application
-    }
 
-    // Notify SAPI that we're done (only if pOutputSite is provided)
-    // CompleteSkip(0) indicates we completed without skipping anything
+    // Notify SAPI that we're done
     if (pOutputSite) {
         pOutputSite->CompleteSkip(0);
     }
