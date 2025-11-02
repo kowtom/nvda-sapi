@@ -4,14 +4,11 @@
 
 SAPIVoice::SAPIVoice()
     : m_refCount(1)
-    , m_nvdaClient(std::make_unique<NVDAClient>())
-    , m_pToken(nullptr) {
+    , m_nvdaClient(std::make_unique<NVDAClient>()) {
     m_nvdaClient->Initialize();
 }
 
 SAPIVoice::~SAPIVoice() {
-    // Don't release m_pToken - SAPI manages its lifetime
-    m_pToken = nullptr;
 }
 
 // IUnknown implementation
@@ -32,13 +29,9 @@ STDMETHODIMP SAPIVoice::QueryInterface(REFIID riid, void** ppvObject) {
         AddRef();
         return S_OK;
     }
-    else if (riid == IID_ISpObjectWithToken) {
-        // Return same pointer as ISpTTSEngine to avoid vtable issues
-        // We manually implement ISpObjectWithToken methods
-        *ppvObject = static_cast<ISpTTSEngine*>(this);
-        AddRef();
-        return S_OK;
-    }
+    
+    // Don't claim to support ISpObjectWithToken - it's optional
+    // Supporting it requires proper vtable layout which is complex with manual implementation
 
     return E_NOINTERFACE;
 }
@@ -125,26 +118,6 @@ STDMETHODIMP SAPIVoice::GetOutputFormat(const GUID* pTargetFormatId,
 
     *ppCoMemDesiredWaveFormatEx = pFormat;
 
-    return S_OK;
-}
-
-// ISpObjectWithToken implementation
-STDMETHODIMP SAPIVoice::SetObjectToken(IUnknown* pToken) {
-    // Store the token pointer (SAPI manages its lifetime)
-    m_pToken = pToken;
-    return S_OK;
-}
-
-STDMETHODIMP SAPIVoice::GetObjectToken(IUnknown** ppToken) {
-    if (!ppToken) {
-        return E_POINTER;
-    }
-
-    *ppToken = m_pToken;
-    if (m_pToken) {
-        m_pToken->AddRef();
-    }
-    
     return S_OK;
 }
 
