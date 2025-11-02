@@ -1,0 +1,89 @@
+name: Build
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main ]
+
+permissions:
+  contents: read
+
+jobs:
+  build-windows:
+    name: Build Windows (${{ matrix.arch }})
+    runs-on: windows-latest
+    
+    permissions:
+      contents: read
+      
+    strategy:
+      matrix:
+        arch: [x86, x64]
+    
+    steps:
+    - uses: actions/checkout@v3
+    
+    - name: Setup CMake
+      uses: lukka/get-cmake@latest
+    
+    - name: Configure CMake
+      run: |
+        mkdir build
+        cd build
+        cmake -G "Visual Studio 17 2022" -A ${{ matrix.arch == 'x86' && 'Win32' || 'x64' }} ..
+    
+    - name: Build
+      run: |
+        cd build
+        cmake --build . --config Release
+    
+    - name: Validate Build
+      shell: bash
+      run: |
+        if [ "${{ matrix.arch }}" == "x86" ]; then
+          test -f build/bin/Release/nvda_sapi32.dll || exit 1
+          echo "✓ nvda_sapi32.dll built successfully"
+        else
+          test -f build/bin/Release/nvda_sapi64.dll || exit 1
+          echo "✓ nvda_sapi64.dll built successfully"
+        fi
+    
+    - name: Upload Artifacts
+      uses: actions/upload-artifact@v3
+      with:
+        name: nvda-sapi-${{ matrix.arch }}
+        path: build/bin/Release/*.dll
+        retention-days: 30
+
+  build-cross-compile:
+    name: Cross-compile from Linux
+    runs-on: ubuntu-latest
+    
+    permissions:
+      contents: read
+    
+    steps:
+    - uses: actions/checkout@v3
+    
+    - name: Install MinGW
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y mingw-w64 g++-mingw-w64
+    
+    - name: Build
+      run: |
+        chmod +x build.sh
+        ./build.sh
+    
+    - name: Validate
+      run: |
+        chmod +x validate.sh
+        ./validate.sh
+    
+    - name: Upload Artifacts
+      uses: actions/upload-artifact@v3
+      with:
+        name: nvda-sapi-cross-compiled
+        path: build/*/bin/*.dll
+        retention-days: 30
