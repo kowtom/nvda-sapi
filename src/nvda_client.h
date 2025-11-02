@@ -1,7 +1,6 @@
 #pragma once
 
 #include <windows.h>
-#include <string>
 
 /**
  * NVDA Client - Handles communication with NVDA screen reader
@@ -17,13 +16,6 @@ public:
      * @return true if successful, false otherwise
      */
     bool Initialize();
-
-    /**
-     * Send text to NVDA for speech
-     * @param text Text to speak
-     * @return true if successful, false otherwise
-     */
-    bool Speak(const std::wstring& text);
 
     /**
      * Send text to NVDA for speech (C-string version for COM safety)

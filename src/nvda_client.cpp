@@ -1,5 +1,4 @@
 #include "nvda_client.h"
-#include <algorithm>
 
 NVDAClient::NVDAClient()
     : m_nvdaControllerClient(nullptr)
@@ -61,10 +60,6 @@ bool NVDAClient::IsNVDARunning() {
         return false;
     }
     return m_testIfRunning() == 0;
-}
-
-bool NVDAClient::Speak(const std::wstring& text) {
-    return SpeakText(text.c_str());
 }
 
 bool NVDAClient::SpeakText(const wchar_t* text) {
