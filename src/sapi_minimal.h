@@ -13,7 +13,9 @@ struct ISpTTSEngineSite;
 
 // SAPI GUIDs - externally defined in sapi_guids.cpp
 extern const GUID IID_ISpTTSEngine;
+extern const GUID IID_ISpObjectWithToken;
 extern const GUID SPDFID_Text;
+extern const GUID SPDFID_WaveFormatEx;
 
 // SAPI Voice State
 typedef enum SPVSTATE {
@@ -88,6 +90,24 @@ DECLARE_INTERFACE_(ISpTTSEngine, IUnknown)
                                const WAVEFORMATEX* pTargetWaveFormatEx,
                                GUID* pDesiredFormatId,
                                WAVEFORMATEX** ppCoMemDesiredWaveFormatEx) PURE;
+};
+
+#undef INTERFACE
+
+// ISpObjectWithToken interface (minimal) - needed for SAPI voice initialization
+#undef INTERFACE
+#define INTERFACE ISpObjectWithToken
+
+DECLARE_INTERFACE_(ISpObjectWithToken, IUnknown)
+{
+    // IUnknown methods
+    STDMETHOD(QueryInterface)(THIS_ REFIID riid, void** ppvObject) PURE;
+    STDMETHOD_(ULONG, AddRef)(THIS) PURE;
+    STDMETHOD_(ULONG, Release)(THIS) PURE;
+
+    // ISpObjectWithToken methods
+    STDMETHOD(SetObjectToken)(THIS_ IUnknown* pToken) PURE;
+    STDMETHOD(GetObjectToken)(THIS_ IUnknown** ppToken) PURE;
 };
 
 #undef INTERFACE
