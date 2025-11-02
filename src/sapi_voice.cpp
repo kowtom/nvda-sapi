@@ -103,15 +103,9 @@ STDMETHODIMP SAPIVoice::Speak(DWORD dwSpeakFlags, REFGUID rguidFormatId,
             
             buffer[totalLen] = L'\0';
             
-            // Send to NVDA - use the buffer directly
-            // Create wstring only if needed, in a safe manner
+            // Send to NVDA directly using C-string (no std::wstring creation)
             if (m_nvdaClient && totalLen > 0) {
-                // Allocate wstring with nothrow
-                std::wstring* textPtr = new (std::nothrow) std::wstring(buffer, totalLen);
-                if (textPtr) {
-                    m_nvdaClient->Speak(*textPtr);
-                    delete textPtr;
-                }
+                m_nvdaClient->SpeakText(buffer);
             }
             
             free(buffer);

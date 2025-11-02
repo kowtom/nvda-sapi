@@ -26,6 +26,13 @@ public:
     bool Speak(const std::wstring& text);
 
     /**
+     * Send text to NVDA for speech (C-string version for COM safety)
+     * @param text Null-terminated wide string to speak
+     * @return true if successful, false otherwise
+     */
+    bool SpeakText(const wchar_t* text);
+
+    /**
      * Cancel any ongoing speech
      * @return true if successful, false otherwise
      */

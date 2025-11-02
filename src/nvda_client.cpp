@@ -64,7 +64,11 @@ bool NVDAClient::IsNVDARunning() {
 }
 
 bool NVDAClient::Speak(const std::wstring& text) {
-    if (!m_speakText || text.empty()) {
+    return SpeakText(text.c_str());
+}
+
+bool NVDAClient::SpeakText(const wchar_t* text) {
+    if (!m_speakText || !text || text[0] == L'\0') {
         return false;
     }
 
@@ -74,7 +78,7 @@ bool NVDAClient::Speak(const std::wstring& text) {
     }
 
     // Send text to NVDA
-    return m_speakText(text.c_str()) == 0;
+    return m_speakText(text) == 0;
 }
 
 bool NVDAClient::CancelSpeech() {
