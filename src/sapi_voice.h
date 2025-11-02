@@ -2,8 +2,6 @@
 
 #include <windows.h>
 #include "sapi_minimal.h"
-#include <string>
-#include <memory>
 
 // Forward declarations
 class NVDAClient;
@@ -32,7 +30,7 @@ public:
 
 private:
     LONG m_refCount;
-    std::unique_ptr<NVDAClient> m_nvdaClient;
+    NVDAClient* m_nvdaClient;  // Use raw pointer - no std::unique_ptr to avoid exceptions
 };
 
 // Factory function

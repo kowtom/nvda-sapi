@@ -6,12 +6,12 @@
 SAPIVoice::SAPIVoice()
     : m_refCount(1)
     , m_nvdaClient(nullptr) {
-    // Initialize NVDA client without exceptions
-    // Using new with nothrow to avoid exceptions
+    // Initialize NVDA client - use raw pointer, no smart pointers
+    // This avoids any potential exceptions from std::unique_ptr
     NVDAClient* client = new (std::nothrow) NVDAClient();
     if (client) {
         if (client->Initialize()) {
-            m_nvdaClient.reset(client);
+            m_nvdaClient = client;
         } else {
             delete client;
         }
@@ -19,6 +19,11 @@ SAPIVoice::SAPIVoice()
 }
 
 SAPIVoice::~SAPIVoice() {
+    // Manual cleanup since we're using raw pointer
+    if (m_nvdaClient) {
+        delete m_nvdaClient;
+        m_nvdaClient = nullptr;
+    }
 }
 
 // IUnknown implementation
@@ -84,7 +89,7 @@ STDMETHODIMP SAPIVoice::Speak(DWORD dwSpeakFlags, REFGUID rguidFormatId,
     }
     
     // Only proceed if we have text and NVDA client is available
-    if (totalLen > 0 && m_nvdaClient.get() != nullptr) {
+    if (totalLen > 0 && m_nvdaClient != nullptr) {
         // Allocate buffer (use malloc to avoid exceptions)
         wchar_t* buffer = static_cast<wchar_t*>(malloc((totalLen + 1) * sizeof(wchar_t)));
         if (buffer) {
@@ -106,9 +111,8 @@ STDMETHODIMP SAPIVoice::Speak(DWORD dwSpeakFlags, REFGUID rguidFormatId,
             
             // Send to NVDA directly using C-string (no std::wstring creation)
             // Double-check pointer is valid before calling
-            NVDAClient* client = m_nvdaClient.get();
-            if (client != nullptr && totalLen > 0 && buffer[0] != L'\0') {
-                client->SpeakText(buffer);
+            if (m_nvdaClient != nullptr && totalLen > 0 && buffer[0] != L'\0') {
+                m_nvdaClient->SpeakText(buffer);
             }
             
             free(buffer);
