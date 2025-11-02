@@ -4,8 +4,17 @@
 
 SAPIVoice::SAPIVoice()
     : m_refCount(1)
-    , m_nvdaClient(std::make_unique<NVDAClient>()) {
-    m_nvdaClient->Initialize();
+    , m_nvdaClient(nullptr) {
+    // Safely initialize NVDA client
+    try {
+        m_nvdaClient = std::make_unique<NVDAClient>();
+        m_nvdaClient->Initialize();
+    }
+    catch (...) {
+        // If initialization fails, m_nvdaClient will remain nullptr
+        // Speak() will handle this gracefully
+        m_nvdaClient.reset();
+    }
 }
 
 SAPIVoice::~SAPIVoice() {
@@ -61,23 +70,29 @@ STDMETHODIMP SAPIVoice::Speak(DWORD dwSpeakFlags, REFGUID rguidFormatId,
         return S_OK;
     }
 
-    // Build complete text from fragments
-    std::wstringstream textStream;
-    const SPVTEXTFRAG* pCurrentFrag = pTextFragList;
+    // Safely build complete text from fragments with error handling
+    try {
+        std::wstringstream textStream;
+        const SPVTEXTFRAG* pCurrentFrag = pTextFragList;
 
-    while (pCurrentFrag) {
-        if (pCurrentFrag->pTextStart && pCurrentFrag->ulTextLen > 0) {
-            textStream.write(pCurrentFrag->pTextStart, pCurrentFrag->ulTextLen);
+        while (pCurrentFrag) {
+            if (pCurrentFrag->pTextStart && pCurrentFrag->ulTextLen > 0) {
+                textStream.write(pCurrentFrag->pTextStart, pCurrentFrag->ulTextLen);
+            }
+            pCurrentFrag = pCurrentFrag->pNext;
         }
-        pCurrentFrag = pCurrentFrag->pNext;
-    }
 
-    std::wstring text = textStream.str();
-    
-    if (!text.empty()) {
-        // Send text to NVDA
-        // If NVDA is not available, still return success to avoid breaking applications
-        m_nvdaClient->Speak(text);
+        std::wstring text = textStream.str();
+        
+        if (!text.empty() && m_nvdaClient) {
+            // Send text to NVDA
+            // If NVDA is not available, still return success to avoid breaking applications
+            m_nvdaClient->Speak(text);
+        }
+    }
+    catch (...) {
+        // Catch any exceptions from string operations or NVDA client
+        // Return success to avoid breaking the application
     }
 
     // Notify SAPI that we're done (only if pOutputSite is provided)
