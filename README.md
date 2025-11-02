@@ -74,12 +74,17 @@ regsvr32 build\x64\bin\Release\nvda_sapi64.dll
 
 **Note:** You may need administrator privileges to register the DLL.
 
+After registration, the "NVDA Screen Reader Voice" will appear in your application's voice selection list.
+
 ## Usage
 
 1. Ensure NVDA is installed and running
 2. Build and register the appropriate DLL (32-bit or 64-bit based on your application)
-3. Configure your legacy application to use SAPI5 for speech output
-4. The application's speech will now be routed through NVDA
+3. Launch your legacy application
+4. In the application's voice or speech settings, select "NVDA" from the available voices
+5. The application's speech will now be routed through NVDA
+
+**Important**: Some applications only enumerate SAPI voices at startup, so you may need to restart the application after registering the DLL.
 
 ## Uninstallation
 

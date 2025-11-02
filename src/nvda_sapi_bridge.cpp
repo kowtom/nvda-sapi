@@ -17,6 +17,10 @@
 static const CLSID CLSID_NVDASAPIBridge = 
     {0xA65F3370, 0x547A, 0x4E90, {0x90, 0xB1, 0xF5, 0xDF, 0x86, 0xFB, 0x78, 0x15}};
 
+// Voice token name - this is what appears in SAPI applications
+static const wchar_t* VOICE_TOKEN_NAME = L"NVDA";
+static const wchar_t* VOICE_DESCRIPTION = L"NVDA Screen Reader Voice";
+
 // Global variables
 HMODULE g_hModule = nullptr;
 LONG g_serverLocks = 0;
@@ -130,6 +134,8 @@ STDAPI DllCanUnloadNow() {
 }
 
 STDAPI DllRegisterServer() {
+    HRESULT hr = S_OK;
+    
     // Get DLL path
     wchar_t dllPath[MAX_PATH];
     if (!GetModuleFileNameW(g_hModule, dllPath, MAX_PATH)) {
@@ -140,11 +146,10 @@ STDAPI DllRegisterServer() {
     LPOLESTR clsidStr;
     StringFromCLSID(CLSID_NVDASAPIBridge, &clsidStr);
 
-    // Create registry key path
+    // 1. Register the COM server class
     wchar_t keyPath[512];
     StringCchPrintfW(keyPath, 512, L"CLSID\\%s\\InProcServer32", clsidStr);
 
-    // Register the COM server
     HKEY hKey;
     LONG result = RegCreateKeyExW(HKEY_CLASSES_ROOT, keyPath, 0, nullptr,
                                    REG_OPTION_NON_VOLATILE, KEY_WRITE, nullptr, &hKey, nullptr);
@@ -160,24 +165,96 @@ STDAPI DllRegisterServer() {
                       static_cast<DWORD>((wcslen(threadingModel) + 1) * sizeof(wchar_t)));
         
         RegCloseKey(hKey);
+    } else {
+        CoTaskMemFree(clsidStr);
+        return SELFREG_E_CLASS;
+    }
+
+    // 2. Register the SAPI voice token
+    // Voice tokens are registered under HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Speech\Voices\Tokens
+    StringCchPrintfW(keyPath, 512, L"SOFTWARE\\Microsoft\\Speech\\Voices\\Tokens\\%s", VOICE_TOKEN_NAME);
+    
+    result = RegCreateKeyExW(HKEY_LOCAL_MACHINE, keyPath, 0, nullptr,
+                            REG_OPTION_NON_VOLATILE, KEY_WRITE, nullptr, &hKey, nullptr);
+    
+    if (result == ERROR_SUCCESS) {
+        // Set the default value (voice description)
+        RegSetValueExW(hKey, nullptr, 0, REG_SZ,
+                      reinterpret_cast<const BYTE*>(VOICE_DESCRIPTION),
+                      static_cast<DWORD>((wcslen(VOICE_DESCRIPTION) + 1) * sizeof(wchar_t)));
+        
+        // Set the CLSID value to point to our TTS engine
+        RegSetValueExW(hKey, L"CLSID", 0, REG_SZ,
+                      reinterpret_cast<const BYTE*>(clsidStr),
+                      static_cast<DWORD>((wcslen(clsidStr) + 1) * sizeof(wchar_t)));
+        
+        // Set language (409 = US English, 0 = gender neutral)
+        const wchar_t* langId = L"409";
+        RegSetValueExW(hKey, L"LangDataPath", 0, REG_SZ,
+                      reinterpret_cast<const BYTE*>(langId),
+                      static_cast<DWORD>((wcslen(langId) + 1) * sizeof(wchar_t)));
+        
+        RegCloseKey(hKey);
+        
+        // Create Attributes subkey
+        StringCchPrintfW(keyPath, 512, L"SOFTWARE\\Microsoft\\Speech\\Voices\\Tokens\\%s\\Attributes", VOICE_TOKEN_NAME);
+        result = RegCreateKeyExW(HKEY_LOCAL_MACHINE, keyPath, 0, nullptr,
+                                REG_OPTION_NON_VOLATILE, KEY_WRITE, nullptr, &hKey, nullptr);
+        
+        if (result == ERROR_SUCCESS) {
+            // Set voice attributes
+            const wchar_t* language = L"409";  // US English
+            RegSetValueExW(hKey, L"Language", 0, REG_SZ,
+                          reinterpret_cast<const BYTE*>(language),
+                          static_cast<DWORD>((wcslen(language) + 1) * sizeof(wchar_t)));
+            
+            const wchar_t* gender = L"Neutral";
+            RegSetValueExW(hKey, L"Gender", 0, REG_SZ,
+                          reinterpret_cast<const BYTE*>(gender),
+                          static_cast<DWORD>((wcslen(gender) + 1) * sizeof(wchar_t)));
+            
+            const wchar_t* age = L"Adult";
+            RegSetValueExW(hKey, L"Age", 0, REG_SZ,
+                          reinterpret_cast<const BYTE*>(age),
+                          static_cast<DWORD>((wcslen(age) + 1) * sizeof(wchar_t)));
+            
+            const wchar_t* vendor = L"NVDA";
+            RegSetValueExW(hKey, L"Vendor", 0, REG_SZ,
+                          reinterpret_cast<const BYTE*>(vendor),
+                          static_cast<DWORD>((wcslen(vendor) + 1) * sizeof(wchar_t)));
+            
+            const wchar_t* name = L"NVDA";
+            RegSetValueExW(hKey, L"Name", 0, REG_SZ,
+                          reinterpret_cast<const BYTE*>(name),
+                          static_cast<DWORD>((wcslen(name) + 1) * sizeof(wchar_t)));
+            
+            RegCloseKey(hKey);
+        }
+    } else {
+        CoTaskMemFree(clsidStr);
+        return SELFREG_E_CLASS;
     }
 
     CoTaskMemFree(clsidStr);
 
-    return (result == ERROR_SUCCESS) ? S_OK : SELFREG_E_CLASS;
+    return hr;
 }
 
 STDAPI DllUnregisterServer() {
+    HRESULT hr = S_OK;
+    
     // Convert CLSID to string
     LPOLESTR clsidStr;
     StringFromCLSID(CLSID_NVDASAPIBridge, &clsidStr);
 
-    // Create registry key path
+    // 1. Unregister the SAPI voice token
     wchar_t keyPath[512];
-    StringCchPrintfW(keyPath, 512, L"CLSID\\%s", clsidStr);
+    StringCchPrintfW(keyPath, 512, L"SOFTWARE\\Microsoft\\Speech\\Voices\\Tokens\\%s", VOICE_TOKEN_NAME);
+    LONG result = RegDeleteTreeW(HKEY_LOCAL_MACHINE, keyPath);
 
-    // Remove the registry key
-    LONG result = RegDeleteTreeW(HKEY_CLASSES_ROOT, keyPath);
+    // 2. Unregister the COM server class
+    StringCchPrintfW(keyPath, 512, L"CLSID\\%s", clsidStr);
+    result = RegDeleteTreeW(HKEY_CLASSES_ROOT, keyPath);
 
     CoTaskMemFree(clsidStr);
 

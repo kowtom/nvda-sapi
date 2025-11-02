@@ -39,14 +39,18 @@ regsvr32 "C:\full\path\to\nvda_sapi32.dll"
 regsvr32 "C:\full\path\to\nvda_sapi64.dll"
 ```
 
-You should see a success message.
+You should see a success message: "DllRegisterServer in [path] succeeded"
 
-### 4. Using
+### 4. Select the NVDA Voice
 
 1. Start NVDA
 2. Launch your legacy application
-3. In the application's speech settings, select SAPI5 (if there's a choice)
-4. The application should now speak through NVDA!
+3. Open the application's voice or speech settings
+4. Look for "NVDA Screen Reader Voice" or "NVDA" in the voice list
+5. Select it as the active voice
+6. The application should now speak through NVDA!
+
+**Tip**: If the NVDA voice doesn't appear, restart the application - some apps only check for voices at startup.
 
 ## Example Applications
 
@@ -59,9 +63,16 @@ This works with applications like:
 
 ## Troubleshooting
 
+**NVDA voice not in the list:**
+- Make sure you registered the DLL (you should have seen a success message)
+- Check you registered the correct version (32-bit app = 32-bit DLL)
+- Restart the application - it may only check for voices at startup
+- Run Command Prompt as Administrator when registering
+
 **No speech:**
 - Make sure NVDA is running
-- Check you registered the correct DLL (32-bit vs 64-bit)
+- Verify you selected "NVDA" as the voice in the application
+- Check that the correct DLL (32-bit vs 64-bit) is registered
 - Restart the application after registering
 
 **Registration failed:**

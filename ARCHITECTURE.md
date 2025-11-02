@@ -179,16 +179,49 @@ The NVDA SAPI Bridge is a COM DLL that acts as a SAPI5 Text-to-Speech engine, fo
 
 ## Registry Structure
 
-When registered, the COM server creates:
+When registered, the bridge creates two sets of registry entries:
+
+### 1. COM Server Registration
 
 ```
 HKEY_CLASSES_ROOT\
   CLSID\
-    {E6F8A7F0-8B1E-4F9A-9C3D-1234567890AB}\
+    {A65F3370-547A-4E90-90B1-F5DF86FB7815}\
       InProcServer32\
         (Default) = "C:\path\to\nvda_sapi32.dll"
         ThreadingModel = "Apartment"
 ```
+
+### 2. SAPI Voice Token Registration
+
+This is critical for voice discovery by SAPI applications:
+
+```
+HKEY_LOCAL_MACHINE\
+  SOFTWARE\
+    Microsoft\
+      Speech\
+        Voices\
+          Tokens\
+            NVDA\
+              (Default) = "NVDA Screen Reader Voice"
+              CLSID = "{A65F3370-547A-4E90-90B1-F5DF86FB7815}"
+              LangDataPath = "409"
+              Attributes\
+                Language = "409"
+                Gender = "Neutral"
+                Age = "Adult"
+                Vendor = "NVDA"
+                Name = "NVDA"
+```
+
+The voice token registration is what makes the NVDA voice appear in application voice selection lists. Without this, applications cannot discover the TTS engine even if the COM server is properly registered.
+
+**Key Points:**
+- Voice tokens are stored in `HKEY_LOCAL_MACHINE` (requires admin rights)
+- The CLSID links the voice token to the TTS engine COM class
+- Attributes help applications filter and display voices appropriately
+- Language code 409 = US English (can be extended for other languages)
 
 ## Performance Considerations
 

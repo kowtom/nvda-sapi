@@ -46,17 +46,34 @@ regsvr32 "C:\path\to\nvda-sapi\build\x64\bin\Release\nvda_sapi64.dll"
 
 1. Launch your legacy application
 2. Navigate to its speech or accessibility settings
-3. Select SAPI5 as the speech engine (if options are available)
-4. The application should now speak through NVDA
+3. Look for a voice selection option - you should see "NVDA" in the list of available voices
+4. Select "NVDA Screen Reader Voice" or "NVDA"
+5. The application should now speak through NVDA
+
+**Important**: After registering the DLL, you may need to restart your application for it to detect the new NVDA voice.
 
 ## Verification
 
 To verify the installation:
 
 1. Ensure NVDA is running
+2. Open your legacy application
+3. Check the voice selection menu - "NVDA" should appear in the list
+4. Select NVDA as the voice
+5. Trigger a speech event in the application
+6. You should hear the speech through NVDA
+
+1. Ensure NVDA is running
 2. Launch your legacy application
-3. Trigger a speech event in the application
-4. You should hear the speech through NVDA
+3. Navigate to voice settings and look for "NVDA" in the voices list
+4. Select the NVDA voice
+5. Trigger a speech event in the application
+6. You should hear the speech through NVDA
+
+If "NVDA" doesn't appear in the voice list:
+- Make sure you registered the correct DLL (32-bit vs 64-bit)
+- Restart the application after registration
+- Check Windows Event Viewer for registration errors
 
 ## Troubleshooting
 
@@ -77,7 +94,20 @@ This usually means the DLL dependencies are missing. Ensure:
 1. Verify NVDA is running: Press `NVDA+N` to open NVDA menu
 2. Check NVDA is not muted: Press `NVDA+S` to toggle speech
 3. Test NVDA directly: Press `NVDA+T` for time announcement
-4. Ensure the correct architecture DLL is registered
+4. Ensure you selected "NVDA" voice in your application's voice settings
+5. Restart the application after changing the voice selection
+6. Ensure the correct architecture DLL is registered
+
+### Voice Not Appearing in Application
+
+1. Verify successful registration - you should see "DllRegisterServer in [DLL path] succeeded" message
+2. Restart the application - some apps only enumerate voices at startup
+3. Check if you registered the correct DLL architecture (32-bit app needs 32-bit DLL)
+4. Try registering both 32-bit and 64-bit DLLs if unsure
+5. Check Windows Registry:
+   - Open Registry Editor (regedit)
+   - Navigate to `HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Speech\Voices\Tokens`
+   - Look for "NVDA" key - it should exist after successful registration
 
 ## Uninstallation
 
