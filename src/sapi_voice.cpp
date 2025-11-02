@@ -33,7 +33,9 @@ STDMETHODIMP SAPIVoice::QueryInterface(REFIID riid, void** ppvObject) {
         return S_OK;
     }
     else if (riid == IID_ISpObjectWithToken) {
-        *ppvObject = static_cast<ISpObjectWithToken*>(this);
+        // Return same pointer as ISpTTSEngine to avoid vtable issues
+        // We manually implement ISpObjectWithToken methods
+        *ppvObject = static_cast<ISpTTSEngine*>(this);
         AddRef();
         return S_OK;
     }
@@ -58,8 +60,12 @@ STDMETHODIMP SAPIVoice::Speak(DWORD dwSpeakFlags, REFGUID rguidFormatId,
                                const WAVEFORMATEX* pWaveFormatEx,
                                const SPVTEXTFRAG* pTextFragList,
                                ISpTTSEngineSite* pOutputSite) {
+    // pOutputSite can be null during initialization/testing
+    // pTextFragList can be null for silence
+    
     if (!pTextFragList) {
-        return E_INVALIDARG;
+        // No text to speak - just return success
+        return S_OK;
     }
 
     // Build complete text from fragments
@@ -77,14 +83,12 @@ STDMETHODIMP SAPIVoice::Speak(DWORD dwSpeakFlags, REFGUID rguidFormatId,
     
     if (!text.empty()) {
         // Send text to NVDA
-        if (!m_nvdaClient->Speak(text)) {
-            // If NVDA is not available, still return success
-            // to avoid breaking applications
-            return S_OK;
-        }
+        // If NVDA is not available, still return success to avoid breaking applications
+        m_nvdaClient->Speak(text);
     }
 
-    // Notify SAPI that we're done
+    // Notify SAPI that we're done (only if pOutputSite is provided)
+    // CompleteSkip(0) indicates we completed without skipping anything
     if (pOutputSite) {
         pOutputSite->CompleteSkip(0);
     }

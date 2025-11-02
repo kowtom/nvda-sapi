@@ -11,8 +11,9 @@ class NVDAClient;
 /**
  * SAPI5 Voice implementation that forwards speech to NVDA
  * Implements ISpTTSEngine and ISpObjectWithToken interfaces for SAPI5 compatibility
+ * Note: We only inherit from ISpTTSEngine to avoid COM multiple inheritance issues
  */
-class SAPIVoice : public ISpTTSEngine, public ISpObjectWithToken {
+class SAPIVoice : public ISpTTSEngine {
 public:
     SAPIVoice();
     virtual ~SAPIVoice();
@@ -30,9 +31,9 @@ public:
     STDMETHOD(GetOutputFormat)(const GUID* pTargetFormatId, const WAVEFORMATEX* pTargetWaveFormatEx,
                                GUID* pDesiredFormatId, WAVEFORMATEX** ppCoMemDesiredWaveFormatEx) override;
 
-    // ISpObjectWithToken methods
-    STDMETHOD(SetObjectToken)(IUnknown* pToken) override;
-    STDMETHOD(GetObjectToken)(IUnknown** ppToken) override;
+    // ISpObjectWithToken methods (manually implemented without inheritance)
+    STDMETHOD(SetObjectToken)(IUnknown* pToken);
+    STDMETHOD(GetObjectToken)(IUnknown** ppToken);
 
 private:
     LONG m_refCount;
